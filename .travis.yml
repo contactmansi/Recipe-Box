@@ -7,4 +7,5 @@ install:
   - pip install -r requirements.txt
 
 script:
+  - cd recipe_store
   - python manage.py test && flake8
