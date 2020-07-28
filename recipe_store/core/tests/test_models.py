@@ -1,5 +1,11 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+from core import models
+
+
+def sample_user(email='test@gmail.com', password='testpass'):
+    """helper function : Create sample user during the test"""
+    return get_user_model().objects.create_user(email, password)
 
 
 class ModelTests(TestCase):
@@ -36,3 +42,13 @@ class ModelTests(TestCase):
         # .is_superuser included as a part of the PermissionsMixin
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.is_staff)
+
+    def test_tag_str(self):
+        """Test the string representation of a tag gives us the name
+        When we call the str function on our tag we want it to return
+        the name of the tag only - define in tag model"""
+        tag = models.Tag.objects.create(
+            user=sample_user(),
+            name='Vegan'
+        )
+        self.assertEqual(str(tag), tag.name)

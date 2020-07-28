@@ -5,7 +5,7 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 
-# Caps is naming convention for variables u dont expect t change
+# Caps is naming convention for variables u dont expect to change
 CREATE_USER_URL = reverse('user:create')
 # url for the http request to generate our token
 TOKEN_URL = reverse('user:token')

@@ -2,7 +2,7 @@ from django.db import models
 # imports required to extend the Django USer model
 # while making use of some of the features that come with django user model
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-
+from django.conf import settings
 # User_Manager class: provides helper function for creating a user/superuser
 
 
@@ -53,3 +53,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     # add the USERNAME_FIELD to be email instead of username
     USERNAME_FIELD = 'email'
     # configure the User model in settings.py using AUTH_USER_MODEL
+
+
+class Tag(models.Model):
+    """Tag to be used for a recipe - str give tag.name"""
+    name = models.CharField(max_length=255)
+    # best practic: retrieve the authuser model settings from settings.py
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,)
+
+    def __str__(self):
+        return self.name
