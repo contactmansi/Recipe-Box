@@ -64,3 +64,22 @@ class PrivateTagsApiTests(TestCase):
         # check the length of results returned expected = 1 for authenticated self.user, 2 will be wrong
         self.assertEqual(len(res.data), 1)
         self.assertEqual(res.data[0]['name'], tag.name)
+
+    def test_create_tag_successful(self):
+        """Test creating a new tag"""
+        # payload -> make a request -> Verify tag created
+        payload = {'name': 'Beverage'}
+        res = self.client.post(TAGS_URL, payload)
+
+        tags_exists = Tag.objects.filter(
+            user=self.user, name=payload['name']
+        ).exists()
+
+        self.assertTrue(tags_exists)
+
+    def test_create_invalid_tag_fails(self):
+        """Test creating a new tag with invaid payload"""
+        payload = {'name': ''}
+        res = self.client.post(TAGS_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
