@@ -64,3 +64,14 @@ class Tag(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Ingredient(models.Model):
+    """Ingredient to be used in a recipe - str gives ingredient.name"""
+    name = models.CharField(max_length=255)
+    # best practic: retrieve the authuser model settings from settings.py
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,)
+
+    def __str__(self):
+        return self.name

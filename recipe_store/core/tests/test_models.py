@@ -46,9 +46,17 @@ class ModelTests(TestCase):
     def test_tag_str(self):
         """Test the string representation of a tag gives us the name
         When we call the str function on our tag we want it to return
-        the name of the tag only - define in tag model"""
+        the name of the tag only - def __str__(): in tag model"""
         tag = models.Tag.objects.create(
             user=sample_user(),
             name='Vegan'
         )
         self.assertEqual(str(tag), tag.name)
+
+    def test_ingredient_str(self):
+        """Test the string representation of a ingredient gives us the name"""
+        ingredient = models.Ingredient.objects.create(
+            user=sample_user(),
+            name='Cucumber'
+        )
+        self.assertEqual(str(ingredient), ingredient.name)
