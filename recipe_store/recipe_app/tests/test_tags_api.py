@@ -69,7 +69,7 @@ class PrivateTagsApiTests(TestCase):
         """Test creating a new tag"""
         # payload -> make a request -> Verify tag created
         payload = {'name': 'Beverage'}
-        res = self.client.post(TAGS_URL, payload)
+        self.client.post(TAGS_URL, payload)
 
         tags_exists = Tag.objects.filter(
             user=self.user, name=payload['name']
