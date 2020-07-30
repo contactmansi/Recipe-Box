@@ -60,3 +60,13 @@ class ModelTests(TestCase):
             name='Cucumber'
         )
         self.assertEqual(str(ingredient), ingredient.name)
+
+    def test_recipe_str(self):
+        """Test str representation of recipe for required fields only"""
+        recipe = models.Recipe.objects.create(
+            user=sample_user(),
+            title='White Sauce Pasta',
+            time_minutes=5,
+            price=10.00
+        )
+        self.assertEqual(str(recipe), recipe.title)
