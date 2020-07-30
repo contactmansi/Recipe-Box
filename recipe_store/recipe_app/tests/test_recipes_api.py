@@ -5,14 +5,30 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from core.models import Recipe  # , Ingredient  # , Tag
-from recipe_app.serializers import RecipeSerializer  # , IngredientSerializer
+from core.models import Recipe, Ingredient, Tag
+from recipe_app.serializers import RecipeSerializer, RecipeDetailSerializer  # , IngredientSerializer
 
 RECIPES_URL = reverse('recipe_app:recipe-list')
 
+
+def recipe_detail_url(recipe_id):
+    """Return the recipe deatils URL
+    # Helper function to create urls with argument ID for ehich details are to be retrieved
+    # List recipes list : /recipe/recipes
+    # Detail display of one recipe: /recipe/recipes/1"""
+    return reverse('recipe_app:recipe-detail', args=[recipe_id, ])
+
+
+def sample_ingredient(user, name='Chilli Sauce'):
+    return Ingredient.objects.create(user=user, name=name)
+
+
+def sample_tag(user, name='Main Course'):
+    """Helper function to create sample tags"""
+    return Tag.objects.create(user=user, name=name)
+
+
 # ** with params converts the extra parameters into a dictonary
-
-
 def sample_recipe(user, **params):
     """Helper function to easily create sample recipes for testing.
     New Method for helper functions: When we need repeated recipe objects in our tests and
@@ -59,12 +75,7 @@ class PrivateRecipeAPITests(TestCase):
 
     def test_retrieve_recipe_list_ordered_by_title(self):
         """Test retrieving recipe list ordered by ID for authenticated user only"""
-        # Ingredient.objects.create(user=self.user, name='Salt')
-        # Ingredient.objects.create(user=self.user, name='Penne')
-        # # italian = Tag.objects.create(user=self.user, name='Italian')
-        # ingredients = Ingredient.objects.all().order_by('-name')
-
-        sample_recipe(self.user)  # , **IngredientSerializer(ingredients, many=True).data)
+        sample_recipe(self.user)
         sample_recipe(self.user)
 
         res = self.client.get(RECIPES_URL)
@@ -85,5 +96,25 @@ class PrivateRecipeAPITests(TestCase):
 
         res = self.client.get(RECIPES_URL)
 
+        recipes = Recipe.objects.filter(user=self.user)
+        serializer = RecipeSerializer(recipes, many=True)
+
         self.assertEqual(len(res.data), 1)
+        self.assertEqual(res.data, serializer.data)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_view_recipe_detail(self):
+        """Test viewing a recipe detail"""
+        recipe = sample_recipe(user=self.user)
+        # Access tags/ingredients using many to many relationship like this
+        recipe.tags.add(sample_tag(user=self.user))
+        recipe.tags.add(sample_tag(user=self.user, name='Italian'))
+        recipe.ingredients.add(sample_ingredient(user=self.user))
+
+        url = recipe_detail_url(recipe.id)
+        res = self.client.get(url)
+
+        serializer = RecipeDetailSerializer(recipe)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data, serializer.data)

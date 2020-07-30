@@ -35,3 +35,11 @@ class RecipeSerializer(serializers.ModelSerializer):
         model = Recipe
         fields = ('id', 'title', 'ingredients', 'tags', 'time_minutes', 'price', 'link',)
         read_only_fields = ('id',)
+
+
+class RecipeDetailSerializer(RecipeSerializer):
+    """Serializer a Recipe details"""
+    # overriding ingredients and tags fields from RecipeSerializer - that's all
+    # nesting serializers within serializer in Django
+    ingredients = IngredientSerializer(many=True, read_only=True)
+    tags = TagSerializer(many=True, read_only=True)

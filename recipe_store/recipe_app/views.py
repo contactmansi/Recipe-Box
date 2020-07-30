@@ -47,6 +47,15 @@ class RecipeViewSet(viewsets.ModelViewSet, mixins.ListModelMixin):
         """Retrieve the recipes for the authenticated user"""
         return self.queryset.filter(user=self.request.user).order_by('-id')
 
+    def get_serializer_class(self):
+        """Return appropriate serializer class"""
+        # Override function - get_serializer_class
+        # change the serializer class for differennt actions available with viewsets
+        # self object also contains the action being used for current request
+        # customize the response to generate a detailed recipe response with ingredients and tags details
+        if self.action == 'retrieve':
+            return serializers.RecipeDetailSerializer
+        return self.serializer_class
 
 # class TagViewSet(viewsets.GenericViewSet,
 #                  mixins.ListModelMixin,
