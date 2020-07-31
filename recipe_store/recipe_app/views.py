@@ -57,6 +57,10 @@ class RecipeViewSet(viewsets.ModelViewSet, mixins.ListModelMixin):
             return serializers.RecipeDetailSerializer
         return self.serializer_class
 
+    def perform_create(self, serializer):
+        """Save the newly created recipe"""
+        serializer.save(user=self.request.user)
+
 # class TagViewSet(viewsets.GenericViewSet,
 #                  mixins.ListModelMixin,
 #                  mixins.CreateModelMixin):
