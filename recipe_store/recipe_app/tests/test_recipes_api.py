@@ -168,7 +168,6 @@ class PrivateRecipeAPITests(TestCase):
         }
 
         res = self.client.post(RECIPES_URL, payload)
-
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         recipe = Recipe.objects.get(id=res.data['id'])
         ingreditents = recipe.ingredients.all()
@@ -176,3 +175,50 @@ class PrivateRecipeAPITests(TestCase):
         self.assertEqual(ingreditents.count(), 2)
         self.assertIn(ingredient1, ingreditents)
         self.assertIn(ingredient2, ingreditents)
+
+    # PATCH used to update fields that are provided in the payload
+    # PUT
+    def test_partial_update_recipe(self):
+        """Test updating recipe with patch"""
+        # Create a sample recipe to be updated later
+        recipe = sample_recipe(user=self.user)
+        # Add a tag to the sample recipe
+        recipe.tags.add(sample_tag(user=self.user))
+        # Create a new tag to be added to sample recipe later
+        new_tag = sample_tag(user=self.user, name="Curry")
+        # Payload to be used to update the recipe with new_tag replacing the old one
+        payload = {'title': 'Paneer Tikka', 'tags': [new_tag.id]}
+        # use detailed url with payload for updating requests - important
+        url = recipe_detail_url(recipe.id)
+        self.client.patch(url, payload)
+        # After patch/put request - Refreshes the values in the DB - important
+        recipe.refresh_from_db()
+        # Check change in title name from defailt Sample_recipe to Chicken Tikka
+        self.assertEqual(recipe.title, payload['title'])
+        # Check no. of tags is one only, new replaced by old
+        tags = recipe.tags.all()
+        self.assertEqual(len(tags), 1)  # length is same as count()
+        # Check the new_tag is an entry in the recipe's tags queryset
+        self.assertIn(new_tag, tags)
+
+    def test_full_recipe_update(self):
+        """Test updating a recipe with PUT request"""
+        # Expected: Replace the old recipe obj with new recipe obj
+        # Fields removed in the payload will be remved from new recipe
+        recipe = sample_recipe(user=self.user)
+        recipe.tags.add(sample_tag(user=self.user))
+        # New recipe payload with new name, price, time_minutes, no tags
+        payload = {
+            'title': 'Pizza',
+            'price': 3.50,
+            'time_minutes': 45,
+        }
+        url = recipe_detail_url(recipe.id)
+        self.client.put(url, payload)
+
+        recipe.refresh_from_db()
+        self.assertEqual(recipe.title, payload['title'])
+        self.assertEqual(recipe.price, payload['price'])
+        self.assertEqual(recipe.time_minutes, payload['time_minutes'])
+        tags = recipe.tags.all()
+        self.assertEqual(len(tags), 0)
