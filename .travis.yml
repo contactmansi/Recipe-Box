@@ -8,6 +8,5 @@ install:
 
 script:
   - mkdir -p /media
-  - mkdir -p /static
   - cd recipe_store
   - python manage.py test && flake8
