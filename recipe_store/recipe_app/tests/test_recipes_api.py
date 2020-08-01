@@ -7,8 +7,18 @@ from rest_framework import status
 
 from core.models import Recipe, Ingredient, Tag
 from recipe_app.serializers import RecipeSerializer, RecipeDetailSerializer  # , IngredientSerializer
+# image library for python - let's us create test images to upload to api
+from PIL import Image
+# python function allows us to generate temporary files on the system
+import tempfile
+import os
 
 RECIPES_URL = reverse('recipe_app:recipe-list')
+
+
+def image_upload_url(recipe_id):
+    """Return URL for recipe image upload"""
+    return reverse('recipe_app:recipe-upload-image', args=[recipe_id, ])
 
 
 def recipe_detail_url(recipe_id):
@@ -128,7 +138,6 @@ class PrivateRecipeAPITests(TestCase):
         }
 
         res = self.client.post(RECIPES_URL, payload)
-
         # recipe_exists = Recipe.objects.filter(user=self.user).exists()
         # self.assertTrue(recipe_exists)
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
@@ -222,3 +231,45 @@ class PrivateRecipeAPITests(TestCase):
         self.assertEqual(recipe.time_minutes, payload['time_minutes'])
         tags = recipe.tags.all()
         self.assertEqual(len(tags), 0)
+
+
+class RecipeImageUploadTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = get_user_model().objects.create_user(
+            email='testrecipeimage@gmail.com',
+            password='testrecipeimage',
+        )
+        self.client.force_authenticate(self.user)
+        # create a sample_recipe for testing the image upload
+        self.recipe = sample_recipe(user=self.user)
+
+    def tearDown(self):
+        """ tearDown() Runs after the tests are run - clearing testing images"""
+        self.recipe.image.delete()
+
+    def test_upload_image_to_recipe(self):
+        """Test uploading image to recipe successfully"""
+        url = image_upload_url(self.recipe.id)
+        # USe context manager to create a temp file in the system, suffix = extension
+        # coz we need the name of the temp file so use NamedTemporaryFile
+        # after exiting the context manager that file is deleted automatically
+        # Process: create a NTF, write an image to that file, upload that file through API
+        with tempfile.NamedTemporaryFile(suffix='.jpg') as ntf:
+            img = Image.new('RGB', (10, 10))
+            img.save(ntf, format='JPEG')
+            # set pointer back to the beginning of file using seek
+            ntf.seek(0)
+            # tell django to make a multipart form request not json(by default)
+            res = self.client.post(url, {'image': ntf}, format='multipart')
+
+        self.recipe.refresh_from_db()
+        self.assertTrue(os.path.exists(self.recipe.image.path))
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('image', res.data)
+
+    def test_upload_image_bad_request(self):
+        """Test uploading an invalid image"""
+        url = image_upload_url(self.recipe.id)
+        res = self.client.post(url, {'image': 'notimage'}, format='multipart')
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)

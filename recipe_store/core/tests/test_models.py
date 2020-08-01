@@ -2,6 +2,8 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 from core import models
 
+from unittest.mock import patch
+
 
 def sample_user(email='test@gmail.com', password='testpass'):
     """helper function : Create sample user during the test"""
@@ -70,3 +72,18 @@ class ModelTests(TestCase):
             price=10.00
         )
         self.assertEqual(str(recipe), recipe.title)
+
+    @patch('uuid.uuid4')  # uuid4 is a function within uuid
+    def test_recipe_filename_uuid(self, mock_uuid):
+        """Test that image is saved in the correct location"""
+        # Mock UUID function from the default UUID library that comes with python, imported above
+        # Change value of uuid returned by uuid4() to sth like 'tst-uuid', WHY?
+        # So that we can reliably test that uuid mactches the mock_uuid, coz don't know what was returned
+        uuid = 'test-uuid'
+        mock_uuid.return_value = uuid
+        # instance reqd by upload field argument of django models - None here
+        file_path = models.recipe_image_file_path(None, 'myimage.jpg')
+        # check file_path is equal to expected path - Literal steing interpolation using f'' strings
+        expected_path = f'uploads/images/{uuid}.jpg'
+
+        self.assertEqual(file_path, expected_path)

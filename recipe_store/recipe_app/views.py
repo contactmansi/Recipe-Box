@@ -1,9 +1,12 @@
-from rest_framework import viewsets, mixins
+from rest_framework import viewsets, mixins, status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from core.models import Tag, Ingredient, Recipe
 from recipe_app import serializers
-
+# add custome action to viewset
+from rest_framework.decorators import action
+# to return custom response
+from rest_framework.response import Response
 # Mixis help customise the List/Create fucnionality available with viewsets
 
 
@@ -55,11 +58,37 @@ class RecipeViewSet(viewsets.ModelViewSet, mixins.ListModelMixin):
         # customize the response to generate a detailed recipe response with ingredients and tags details
         if self.action == 'retrieve':
             return serializers.RecipeDetailSerializer
+        elif self.action == 'upload_image':
+            return serializers.RecipeImageSerializer
         return self.serializer_class
 
     def perform_create(self, serializer):
         """Save the newly created recipe"""
         serializer.save(user=self.request.user)
+
+    # actionas are defined as functions to the viewsets,
+    # by default we have overriden get_queryset, get_serializer_class, perform_create
+    # define a custom action: 1. using @action() decorator, 2. methods = to post an image to our recipe
+    # detail - says that this action is for detail recipe, using detail_url for existing recipe
+    # url_path = 'upload-image': USE url recipe/{id}/upload-image
+    @action(methods=['POST'], detail=True, url_path='upload-image')
+    def upload_image(self, request, pk=None):
+        """Upload an image to a recipe"""
+        # retrieve the recipe object that is being accessed in the url based on the id
+        recipe = self.get_object()
+        serializer = self.get_serializer(recipe, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
 
 # class TagViewSet(viewsets.GenericViewSet,
 #                  mixins.ListModelMixin,

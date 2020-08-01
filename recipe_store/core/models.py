@@ -4,6 +4,18 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.conf import settings
 # User_Manager class: provides helper function for creating a user/superuser
+import uuid
+import os
+
+
+def recipe_image_file_path(instance, filename):
+    """Generate new file pathf or the recipe image"""
+    # Splitting the extension into ext using split
+    ext = filename.split('.')[-1]
+    # creating new file name for our db with uuid
+    filename = f'{uuid.uuid4()}.{ext}'
+    # join filename to the destination path where we want to store the image
+    return os.path.join('uploads/images/', filename)
 
 
 class UserManager(BaseUserManager):
@@ -86,6 +98,7 @@ class Recipe(models.Model):
     tags = models.ManyToManyField('Tag')
     ingredients = models.ManyToManyField('Ingredient')
     link = models.CharField(max_length=255, blank=True)
+    image = models.ImageField(null=True, upload_to=recipe_image_file_path)
 
     def __str__(self):
         return self.title
