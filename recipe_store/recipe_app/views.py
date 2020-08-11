@@ -20,7 +20,15 @@ class BaseRecipeAttrViewSet(viewsets.GenericViewSet,
     def get_queryset(self):
         """Return tags for current authenticated user only
         When viewset is invoked from url, it'll call queryset to retrive the tags/ingredient"""
-        return self.queryset.filter(user=self.request.user).order_by('-name')
+        # filtering by tags, give default 0
+        assigned_only = bool(
+            int(self.request.query_params.get('assigned_only', 0))
+        )
+        queryset = self.queryset
+        if assigned_only:
+            queryset = queryset.filter(recipe__isnull=False)
+
+        return queryset.filter(user=self.request.user).order_by('-name').distinct()
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -66,8 +74,8 @@ class RecipeViewSet(viewsets.ModelViewSet, mixins.ListModelMixin):
         if ingredients:
             ingredients_ids = self._params_to_ints(ingredients)
             queryset = queryset.filter(ingredients__id__in=ingredients_ids)
-
-        return queryset.filter(user=self.request.user).order_by('-id')
+        # adding. distinct() to return unique recipes only
+        return queryset.filter(user=self.request.user).order_by('-id').distinct()
 
     def get_serializer_class(self):
         """Return appropriate serializer class"""
